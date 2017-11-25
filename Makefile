@@ -10,8 +10,8 @@ SHELL := /bin/sh
 MKDIR ?= mkdir
 RMDIR ?= rmdir
 
-COLOR := echo -en '\e[1;34m'
-RESET := echo -en '\e[0m'
+COLOR := \033[1;34m
+RESET := \033[0m
 
 ##########
 # expand variables now
@@ -131,54 +131,40 @@ debugrun: debug run ## run debug version
 style: $(STYLED)
 
 $(DEPDIR)/%.styled: $(SRCDIR)/%
-	@$(COLOR)
-	echo "Styling $(SRCDIR)/$*"
-	@$(RESET)
+	@printf "$(COLOR)Styling $(SRCDIR)/$*$(RESET)\\n"
 # sed is needed to fix string literals (uncrustify bug: https://github.com/uncrustify/uncrustify/issues/945)
 	uncrustify -c .uncrustify.cfg --replace --no-backup $(SRCDIR)/$* && sed -i -e 's/\([uUL]\)\s\+\(['"'"'"]\)/\1\2/g' $(SRCDIR)/$* && touch $@
 
 # link
 $(EXE): $(OBJ)
-	$(COLOR)
-	echo "Link $^ -> $@"
-	$(RESET)
+	@printf "$(COLOR)Link $^ -> $@$(RESET)\\n"
 	$(CC) -Wl,--as-needed -o $@ $(OBJ) $(LDFLAGS) $(LDLIBS)
 
 # create binary blobs for other files
 $(filter-out %.c.o %.cpp.o,$(OBJ)): $(OBJDIR)/%.o: $(SRCDIR)/%
-	@$(COLOR)
-	echo "Other file $(SRCDIR)/$* -> $@"
-	@$(RESET)
+	@printf "$(COLOR)Other file $(SRCDIR)/$* -> $@$(RESET)\\n"
 	echo "$$INCBIN" | sed -e 's/@sym@/$(subst .,_,$*)/' -e 's/@file@/$</' | gcc -x assembler-with-cpp - -c -o $@
 
 # compile
 $(OBJDIR)/%.c.o: $(DEPDIR)/%.c.d
-	@$(COLOR)
-	echo "Compile $(SRCDIR)/$*.c -> $@"
-	@$(RESET)
+	@printf "$(COLOR)Compile $(SRCDIR)/$*.c -> $@$(RESET)\\n"
 	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/$*.c
 
 # compile
 $(OBJDIR)/%.cpp.o: $(DEPDIR)/%.cpp.d
-	@$(COLOR)
-	echo "Compile $(SRCDIR)/$*.cpp -> $@"
-	@$(RESET)
+	@printf "$(COLOR)Compile $(SRCDIR)/$*.cpp -> $@$(RESET)\\n"
 	$(CXX) $(CXXFLAGS) -c -o $@ $(SRCDIR)/$*.cpp
 
 # build dependecies list
 $(DEPDIR)/%.c.d: $(SRCDIR)/%.c
-	@$(COLOR)
-	echo "Generating dependencies $(SRCDIR)/$*.c -> $@"
-	@$(RESET)
+	@printf "$(COLOR)Generating dependencies $(SRCDIR)/$*.c -> $@$(RESET)\\n"
 	$(CC) $(DEPFLAGS) -MM -MT '$$(OBJDIR)/$*.c.o' $< | sed 's,^\([^:]\+.o\):,\1 $$(DEPDIR)/$*.c.d:,' > $@
 # $(CC) $(DEPFLAGS) -MM -MT '$$(OBJDIR)/$*.c.o' -MF $@ $<
 # sed -i 's,^\([^:]\+.o\):,\1 $$(DEPDIR)/$*.c.d:,' $@
 
 # build dependecies list
 $(DEPDIR)/%.cpp.d: $(SRCDIR)/%.cpp
-	@$(COLOR)
-	echo "Generating dependencies $(SRCDIR)/$*.cpp -> $@"
-	@$(RESET)
+	@printf "$(COLOR)Generating dependencies $(SRCDIR)/$*.cpp -> $@$(RESET)\\n"
 	$(CXX) $(DEPFLAGS) -MM -MT '$$(OBJDIR)/$*.cpp.o' $< | sed 's,^\([^:]\+.o\):,\1 $$(DEPDIR)/$*.cpp.d:,' > $@
 # $(CXX) $(DEPFLAGS) -MM -MT '$$(OBJDIR)/$*.cpp.o' -MF $@ $<
 # sed -i 's,^\([^:]\+.o\):,\1 $$(DEPDIR)/$*.cpp.d:,' $@
@@ -206,9 +192,7 @@ clean: mostlyclean ## delete everything this Makefile created
 
 .PHONY: mostlyclean
 mostlyclean: ## delete everything created, leave executable
-	@$(COLOR)
-	echo "Cleaning"
-	@$(RESET)
+	@printf "$(COLOR)Cleaning$(RESET)\\n"
 ifneq ($(wildcard $(OBJDIR)),)
 	-$(RM) $(OBJ)
 	-$(RMDIR) $(OBJDIR)
@@ -221,9 +205,7 @@ endif
 
 .PHONY: forceclean
 forceclean: ## force delete all created temporary folders
-	@$(COLOR)
-	echo "Force cleaning"
-	@$(RESET)
+	@printf "$(COLOR)Force cleaning$(RESET)\\n"
 ifneq ($(wildcard $(OBJDIR)),)
 	-$(RM) -r $(OBJDIR)
 endif
