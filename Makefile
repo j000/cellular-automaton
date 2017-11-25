@@ -43,6 +43,8 @@ endif
 # functions should be declared
 #WARNINGS += -Wmissing-declarations
 
+##########
+
 # C-specific warnings
 CWARNINGS := $(WARNINGS)
 # warn about fn() instead of fn(void)
@@ -55,7 +57,9 @@ CFLAGS ?= $(CWARNINGS) -std=c11 -O2 -fstack-protector-strong
 CXXFLAGS ?= $(WARNINGS) -std=c++14 -O2 -fstack-protector-strong
 # for future use if needed
 DEPFLAGS ?=
-LDFLAGS ?= -lm
+LDLIBS += -lm
+
+# remove all symbol table and relocation information from the executable
 LDFLAGS += -s
 
 ##########
@@ -63,7 +67,8 @@ LDFLAGS += -s
 # add unicode support
 CFLAGS += $(shell pkg-config --cflags-only-I icu-uc icu-io)
 CXXFLAGS += $(shell pkg-config --cflags-only-I icu-uc icu-io)
-LDFLAGS += $(shell pkg-config --libs-only-l --libs-only-L icu-uc icu-io)
+LDLIBS += $(shell pkg-config --libs-only-l icu-uc icu-io)
+LDFLAGS += $(shell pkg-config --libs-only-L icu-uc icu-io)
 
 EXE := $(basename $(firstword $(SRC)))
 
@@ -130,7 +135,7 @@ $(EXE): $(OBJ)
 	$(COLOR)
 	echo "Link $^ -> $@"
 	$(RESET)
-	$(CC) -Wl,--as-needed -o $@ $(OBJ) $(LDFLAGS)
+	$(CC) -Wl,--as-needed -o $@ $(OBJ) $(LDFLAGS) $(LDLIBS)
 
 # create binary blobs for other files
 $(filter-out %.c.o %.cpp.o,$(OBJ)): $(OBJDIR)/%.o: $(SRCDIR)/%
