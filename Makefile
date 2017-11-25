@@ -79,19 +79,13 @@ LDFLAGS += $(shell pkg-config --libs-only-L icu-uc icu-io)
 
 EXE := $(basename $(firstword $(SRC)))
 
-OBJ := $(addprefix $(OBJDIR)/, \
-	$(addsuffix .o, $(SRC)) \
-)
+OBJ := $(foreach src,$(SRC),$(OBJDIR)/$(src).o)
 
-DEP := $(addprefix $(DEPDIR)/, \
-	$(addsuffix .d, $(SRC)) \
-)
+DEP := $(foreach src,$(SRC),$(DEPDIR)/$(src).d)
 
 STYLE := $(filter %.c %.h %.cpp %.hpp,$(SRC))
 
-STYLED := $(addprefix $(DEPDIR)/, \
-	$(addsuffix .styled, $(STYLE)) \
-)
+STYLED := $(foreach src,$(STYLE),$(DEPDIR)/$(src).styled)
 
 # be silent unless VERBOSE
 ifndef VERBOSE
