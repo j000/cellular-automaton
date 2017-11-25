@@ -10,8 +10,15 @@ SHELL := /bin/sh
 MKDIR ?= mkdir
 RMDIR ?= rmdir
 
-COLOR = echo -en '\e[1;34m'
-RESET = echo -en '\e[0m'
+COLOR := echo -en '\e[1;34m'
+RESET := echo -en '\e[0m'
+
+##########
+# expand variables now
+SRC := $(SRC)
+
+MKDIR := $(MKDIR)
+RMDIR := $(RMDIR)
 
 ##########
 # warnings
@@ -92,7 +99,7 @@ ifndef VERBOSE
 endif
 
 # template for inline assembler
-define INCBIN
+define INCBIN :=
   .section @file@, "a"
   .global @sym@_start
 @sym@_start:
@@ -127,7 +134,7 @@ $(DEPDIR)/%.styled: $(SRCDIR)/%
 	@$(COLOR)
 	echo "Styling $(SRCDIR)/$*"
 	@$(RESET)
-	# sed is needed to fix string literals (uncrustify bug: https://github.com/uncrustify/uncrustify/issues/945)
+# sed is needed to fix string literals (uncrustify bug: https://github.com/uncrustify/uncrustify/issues/945)
 	uncrustify -c .uncrustify.cfg --replace --no-backup $(SRCDIR)/$* && sed -i -e 's/\([uUL]\)\s\+\(['"'"'"]\)/\1\2/g' $(SRCDIR)/$* && touch $@
 
 # link
