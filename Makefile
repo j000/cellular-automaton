@@ -3,6 +3,8 @@ SRC ?= main.c forest-fire.c
 SRCDIR ?= .
 OBJDIR ?= .objdir
 DEPDIR ?= .depdir
+LIBDIR := libs
+LIB := $(notdir $(wildcard $(LIBDIR)/*))
 
 ##########
 # less important stuff
@@ -83,6 +85,11 @@ OBJ := $(foreach src,$(SRC),$(OBJDIR)/$(src).o)
 
 DEP := $(foreach src,$(SRC),$(DEPDIR)/$(src).d)
 
+LIBDEP := $(foreach lib,$(LIB),$(LIBDIR)/$(lib)/lib$(lib).a)
+
+# add libraries
+LDFLAGS += $(foreach lib,$(LIB),-L$(LIBDIR)/$(lib)/)
+
 STYLE := $(filter %.c %.h %.cpp %.hpp,$(SRC))
 
 STYLED := $(foreach src,$(STYLE),$(DEPDIR)/$(src).styled)
@@ -130,7 +137,7 @@ $(DEPDIR)/%.styled: $(SRCDIR)/%
 	uncrustify -c .uncrustify.cfg --replace --no-backup $(SRCDIR)/$* && sed -i -e 's/\([uUL]\)\s\+\(['"'"'"]\)/\1\2/g' $(SRCDIR)/$* && touch $@
 
 # link
-$(EXE): $(OBJ)
+$(EXE): $(OBJ) $(LIBDEP)
 	@printf "$(COLOR)Link $^ -> $@$(RESET)\\n"
 	$(CC) -Wl,--as-needed -o $@ $(OBJ) $(LDFLAGS) $(LDLIBS)
 
@@ -178,6 +185,13 @@ $(OBJDIR):
 # create directory
 $(DEPDIR):
 	-$(MKDIR) $(DEPDIR)
+
+# make libraries
+$(LIBDEP): %: force_check
+	@printf "$(COLOR)Verifying $@$(RESET)\\n"
+	$(MAKE) CFLAGS="$(filter-out -W%,$(CFLAGS))" -C $(@D) $(@F)
+
+.PHONY: force_check
 
 # delete stuff
 .PHONY: clean
